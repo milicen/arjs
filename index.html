@@ -1,0 +1,236 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!-- <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <title>Document</title>
+
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+  <style>
+    .envelope {
+      position: fixed;
+      inset: 0;
+      /* display: none; */
+      display: grid;
+      place-items: center;
+    }
+
+    .envelope > * {
+      width: min(40%, 500px);
+      position: absolute;
+    }
+
+    .envelope .back {
+      z-index: 0;
+    }
+
+    .envelope .cat {
+      z-index: 1;
+    }
+
+    .envelope .front {
+      z-index: 2;
+    }
+
+    .envelope .flip {
+      z-index: 3;
+    }
+
+    .envelope .stamp {
+      z-index: 4;
+    }
+
+    .envelope .flip {
+      transform-origin: bottom;
+      transform: translateY(-125%) scaleY(-1) ;
+      transition:  transform 0.4s ease-in;
+    }
+    
+    .envelope .flip.open {
+      transform: translateY(-115%) scaleY(1);
+    }
+
+    .envelope .stamp {
+      width: min(30%, 400px);
+      background: url(./assets/envelope/stamp_sheet.png) 0 0;
+      background-size: cover;
+    }
+
+    .cat {
+      transform: translate(0, 0);
+      transition: transform .5s ease-in;
+    }
+
+    .up {
+      transform: translate(0, -100vh);
+    }
+
+    #cat1.down {
+      transform: translate(-70%, -70%);
+      z-index: 10;
+    }
+
+    #cat2.down {
+      transform: translate(70%, -70%);
+      z-index: 10;
+
+    }
+
+    #cat3.down {
+      transform: translate(-70%, 70%);
+      z-index: 10;
+
+    }
+
+    #cat4.down {
+      transform: translate(70%, 70%);
+      z-index: 10;
+    }
+
+  </style>
+
+  <script>
+    const totalFrames = 14;
+    let frameNumber = 0;
+    let catLoop_Index = 0
+
+    function loop(reverse = false) {
+      setTimeout(() => {
+        document.querySelector('.stamp').style.backgroundPosition = `-${frameNumber * 100}% 0`
+        if (reverse) {
+          frameNumber--
+          if (frameNumber >= 0) {
+            loop(true)
+          }
+        }
+        else {
+          frameNumber++
+          if (frameNumber < totalFrames) {
+            loop()
+          }
+        }
+      }, 50)
+    }
+
+    function catLoop(cats) {
+      setTimeout(() => {
+        cats[catLoop_Index].classList.add('down')
+        catLoop_Index++
+        if (catLoop_Index < cats.length) {
+          catLoop(cats)
+        }
+      }, 500)
+    }
+
+    AFRAME.registerComponent('markerhandler', {
+        init: function () {
+          this.el.addEventListener('markerFound', () => {
+            console.log('marker found')
+            frameNumber = 0
+            catLoop1_Index = 0
+            catLoop_Index = 0
+            
+            let cats = document.querySelectorAll('.cat')
+
+            document.querySelector('.envelope').style.display = 'grid'
+
+            setTimeout(() => {
+              loop()
+            }, 500)
+            
+            
+            setTimeout(() => {
+              document.querySelector('.flip').classList.add('open')
+              setTimeout(() => {
+                document.querySelector('.flip').style.zIndex = '0'
+              }, 400);
+            }, 1600);
+
+            setTimeout(() => {
+              catLoop(cats)
+            }, 2000)
+
+
+            setTimeout(() => {
+            }, 4000)
+          });
+          
+          this.el.addEventListener('markerLost', () => {
+            frameNumber = 13
+            catLoop1_Index = 3
+            catLoop_Index = 3
+            let cats = document.querySelectorAll('.cat')
+
+            cats.forEach(cat => {
+              cat.classList.remove('down')
+            })
+
+            setTimeout(() => {
+              document.querySelector('.flip').style.zIndex = '3'
+              document.querySelector('.flip').classList.remove('open')
+            }, 800)
+
+            setTimeout(() => {
+              loop(true)
+            }, 1000)
+
+            setTimeout(() => {
+              document.querySelector('.envelope').style.display = 'none'
+            }, 2000);
+            
+          });
+        }
+      });
+  </script>
+</head>
+<body>
+  <a-scene
+    vr-mode-ui="enabled: false;"
+    renderer="logarithmicDepthBuffer: true;"
+    embedded
+    arjs="trackingMethod: best; sourceType: webcam;debugUIEnabled: false;">
+
+    <a-nft
+      markerhandler
+      type="nft"
+      url="arjs/stamp"
+      smooth="true"
+      smoothCount="100"
+      smoothTolerance=".1"
+      smoothThreshold="50">
+    </a-nft>
+
+    <a-entity camera></a-entity>
+  
+  </a-scene>
+
+  <audio src=""></audio>
+
+
+  <div class="envelope">
+    <img class="back" src="./assets/envelope/back_side.png">
+
+    <img id="cat1" class="cat" src="./assets/cat_01.gif" data-audio="./assets/audios/meow-meme.mp3">
+    <img id="cat2" class="cat" src="./assets/cat_02.gif" data-audio="./assets/audios/meow-waka-waka.mp3">
+    <img id="cat3" class="cat" src="./assets/cat_03.gif" data-audio="./assets/audios/meow-last-christmas.mp3">
+    <img id="cat4" class="cat" src="./assets/cat_04.gif" data-audio="./assets/audios/meow-ride.mp3">
+
+    <img class="front" src="./assets/envelope/front_side.png">
+    <img class="flip" src="./assets/envelope/flip.png">
+    <img class="stamp" src="./assets/envelope/empty.png">
+  </div>
+
+</body>
+<script>
+  const audioPlayer = document.querySelector('audio')
+
+  document.querySelectorAll('.cat').forEach(cat => {
+    cat.addEventListener('click', event => {
+      audioPlayer.src = cat.dataset.audio
+      audioPlayer.play()
+    })
+  });
+</script>
+</html>
